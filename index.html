@@ -1,438 +1,518 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Trợ Lý HLV Kim Đồng</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trạm Huấn Luyện Morse & Semaphore - HLV Cấp 2 Trung Ương</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Babel Standalone -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
     <style>
-      body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-      .font-mono { font-family: 'Roboto Mono', monospace; }
-      ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-      
-      /* Animation */
-      @keyframes spin { to { transform: rotate(360deg); } }
-      .loading-spinner { animation: spin 1s linear infinite; }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
-  }
-}
-</script>
-</head>
-<body class="text-slate-900">
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
 
-    <!-- 1. LOADING & ERROR STATE (Visible by default until React takes over) -->
-    <div id="loading-state" class="fixed inset-0 flex items-center justify-center bg-slate-50 z-50 p-6 text-center">
-        <div class="max-w-md w-full">
-            <div class="mb-4 text-4xl animate-bounce">⚜️</div>
-            <h2 class="text-xl font-bold text-slate-800 mb-2">Đang tải Trợ Lý HLV...</h2>
-            <p id="loading-text" class="text-slate-500 mb-6 text-sm">Vui lòng đợi trong giây lát để tải thư viện.</p>
-            
-            <!-- Timeout Message Container -->
-            <div id="timeout-msg" class="hidden mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 text-left">
-                <p class="font-bold flex items-center gap-2 mb-2">⚠️ Tải quá lâu?</p>
-                <ul class="list-disc ml-5 space-y-1">
-                    <li>Kiểm tra kết nối Internet (ứng dụng cần tải thư viện từ CDN).</li>
-                    <li>Nếu đang mở file trực tiếp (<code>file://</code>), hãy thử đưa lên Host hoặc dùng <b>Live Server</b>.</li>
-                </ul>
-                <button onclick="window.location.reload()" class="mt-3 w-full py-2 bg-amber-200 hover:bg-amber-300 rounded font-bold text-amber-900 transition-colors">Thử tải lại</button>
+        .code-font {
+            font-family: 'JetBrains+Mono', monospace;
+        }
+
+        .active-glow {
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.7);
+            transition: all 0.1s ease;
+        }
+
+        #armLeft line, #armRight line, #armLeft rect, #armRight rect {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #059669;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .correct-pulse {
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .status-blink {
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="p-2 md:p-6">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="bg-emerald-800 text-white p-6 rounded-3xl shadow-2xl mb-6 flex flex-col md:flex-row items-center gap-6">
+            <div class="bg-white text-emerald-800 p-4 rounded-full w-20 h-20 flex items-center justify-center font-bold text-3xl shadow-inner border-4 border-emerald-600">
+                HLV
+            </div>
+            <div class="text-center md:text-left">
+                <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight uppercase">Trạm Huấn Luyện Morse & Semaphore</h1>
+                <p class="text-emerald-100 opacity-90 italic text-sm md:text-base italic">Kỹ năng chuyên môn Đội - Huấn luyện viên Cấp 2 Trung ương</p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left Column -->
+            <div class="lg:col-span-8 space-y-6">
+                <!-- Training/Test Section -->
+                <section class="bg-white p-6 rounded-3xl shadow-md border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <label id="inputLabel" class="text-slate-700 font-bold flex items-center gap-2">
+                            <span class="text-emerald-600">📝</span> Soạn thảo bản tin:
+                        </label>
+                        <div class="flex gap-2">
+                            <button id="btnAiQuiz" class="text-sm bg-orange-100 text-orange-700 hover:bg-orange-200 px-4 py-2 rounded-full font-bold transition-all flex items-center gap-2">
+                                <span id="aiIcon">🎯 Thử thách Kiểm tra</span>
+                            </button>
+                            <button id="btnNormalMode" class="text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-full font-bold transition-all hidden">
+                                🔙 Quay lại Tự luyện
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Normal Input -->
+                    <div id="normalInputGroup">
+                        <textarea id="textInput" 
+                            class="w-full h-24 p-4 bg-slate-50 border border-slate-300 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-xl font-medium"
+                            placeholder="Nhập nội dung cần truyền đạt..."></textarea>
+                    </div>
+
+                    <!-- Test Input Group -->
+                    <div id="testInputGroup" class="hidden space-y-4">
+                        <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-4">
+                            <p class="text-orange-800 text-sm font-bold">⚠️ BẢN TIN ĐÃ BỊ ẨN. Hãy nghe Morse hoặc nhìn Semaphore để giải mã!</p>
+                        </div>
+                        <input type="text" id="userGuess" 
+                            class="w-full p-5 bg-white border-2 border-orange-300 rounded-2xl focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-xl font-bold text-orange-700"
+                            placeholder="Nhập đáp án bạn nghe được vào đây...">
+                        <div class="flex gap-2">
+                            <button id="btnCheckAnswer" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-bold flex-1 transition-all shadow-lg active:scale-95">
+                                Kiểm tra đáp án
+                            </button>
+                            <button id="btnToggleReveal" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-3 rounded-xl font-bold transition-all">
+                                Xem kết quả
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <button id="btnPlayMorse" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-lg active:scale-95 flex-1 min-w-[150px]">
+                            <span class="text-xl">🔊</span> Thổi Morse
+                        </button>
+                        <button id="btnPlaySema" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-lg active:scale-95 flex-1 min-w-[150px]">
+                            <span class="text-xl">🚩</span> Semaphore
+                        </button>
+                        <button id="btnStop" class="bg-slate-800 hover:bg-black text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95">
+                            Dừng
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Analysis Section -->
+                <section id="resultSection" class="bg-white p-6 rounded-3xl shadow-md border border-slate-200 overflow-hidden transition-all">
+                    <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        📡 Phân tích bản tin (Chuẩn Telex)
+                    </h3>
+                    <div id="answerContent">
+                        <div id="telexPreview" class="bg-slate-900 text-emerald-400 p-5 rounded-2xl code-font min-h-[60px] text-xl break-all mb-3 leading-relaxed">
+                            Chưa có bản tin...
+                        </div>
+                        <div id="morsePreview" class="bg-slate-100 text-slate-600 p-5 rounded-2xl code-font text-2xl tracking-widest break-all">
+                            ...
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            <div id="protocol-warning" class="hidden mt-4 text-left bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-800">
-                <p class="font-bold flex items-center gap-2 mb-2">⚠️ Cảnh báo chạy file trực tiếp</p>
-                <p>Trình duyệt có thể chặn ứng dụng chạy trên giao thức <code>file://</code>.</p>
+            <!-- Right Column -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- Semaphore -->
+                <div class="bg-white p-6 rounded-3xl shadow-md border border-slate-200 text-center relative overflow-hidden">
+                    <h3 class="font-bold text-slate-700 mb-6">Trạm Semaphore</h3>
+                    <div id="semaContainer" class="flex justify-center bg-slate-50 p-6 rounded-3xl h-64 items-center border border-slate-100">
+                        <svg id="semaSvg" viewBox="0 0 100 100" class="w-full h-full max-w-[200px]">
+                            <circle cx="50" cy="25" r="8" fill="#334155" />
+                            <line x1="50" y1="33" x2="50" y2="70" stroke="#334155" stroke-width="4" stroke-linecap="round" />
+                            <line x1="50" y1="70" x2="35" y2="95" stroke="#334155" stroke-width="4" stroke-linecap="round" />
+                            <line x1="50" y1="70" x2="65" y2="95" stroke="#334155" stroke-width="4" stroke-linecap="round" />
+                            <g id="armLeft">
+                                <line x1="50" y1="40" x2="20" y2="40" stroke="#dc2626" stroke-width="5" stroke-linecap="round" />
+                                <rect x="15" y="30" width="12" height="12" fill="#ef4444" rx="1" />
+                                <rect x="15" y="30" width="6" height="6" fill="#fbbf24" rx="1" />
+                            </g>
+                            <g id="armRight">
+                                <line x1="50" y1="40" x2="80" y2="40" stroke="#dc2626" stroke-width="5" stroke-linecap="round" />
+                                <rect x="73" y="30" width="12" height="12" fill="#ef4444" rx="1" />
+                                <rect x="73" y="30" width="6" height="6" fill="#fbbf24" rx="1" />
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="mt-4 flex flex-col items-center">
+                        <div id="semaStatus" class="text-xs font-bold text-slate-400 mb-1 h-4 uppercase tracking-widest"></div>
+                        <div id="semaChar" class="text-4xl font-black text-blue-600 h-10 italic"></div>
+                    </div>
+                </div>
+
+                <!-- Morse Light -->
+                <div class="bg-white p-6 rounded-3xl shadow-md border border-slate-200 text-center">
+                    <h3 class="font-bold text-slate-700 mb-4">Đèn Tín Hiệu</h3>
+                    <div id="morseLight" class="w-20 h-20 bg-slate-200 rounded-full mx-auto border-4 border-slate-300 transition-colors"></div>
+                </div>
+
+                <!-- Settings -->
+                <div class="bg-emerald-900 text-white p-6 rounded-3xl shadow-xl">
+                    <h3 class="font-bold mb-6 flex items-center gap-2">⚙️ Cấu hình HLV</h3>
+                    <div class="space-y-5">
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold uppercase text-emerald-300 mb-2 tracking-widest">
+                                <span>Tốc độ Morse</span>
+                                <span><span id="wpmVal">15</span> WPM</span>
+                            </div>
+                            <input type="range" id="wpmSlider" min="5" max="35" value="15" class="w-full accent-emerald-400 h-1.5 bg-emerald-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold uppercase text-blue-300 mb-2 tracking-widest">
+                                <span>Tốc độ Semaphore</span>
+                                <span><span id="semaVal">1000</span> ms</span>
+                            </div>
+                            <input type="range" id="semaSlider" min="300" max="3000" step="100" value="1000" class="w-full accent-blue-400 h-1.5 bg-emerald-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 2. REACT ROOT -->
-    <div id="root"></div>
+    <!-- Notification system -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl hidden opacity-0 transition-all font-bold shadow-2xl z-50 border border-slate-700"></div>
 
     <script>
-        // Check protocol immediately
-        if (window.location.protocol === 'file:') {
-            document.getElementById('protocol-warning').classList.remove('hidden');
+        const apiKey = ""; 
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'morse-sema-trainer';
+
+        // --- DATA ---
+        const MORSE_MAP = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....',
+            'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.',
+            'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
+            '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': '/'
+        };
+
+        const TELEX_MAP = {
+            'á': 'as', 'à': 'af', 'ả': 'ar', 'ã': 'ax', 'ạ': 'aj', 'â': 'aa', 'ấ': 'aas', 'ầ': 'aaf', 'ẩ': 'aar', 'ẫ': 'aax', 'ậ': 'aaj', 'ă': 'aw', 'ắ': 'aws', 'ằ': 'awf', 'ẳ': 'awr', 'ẵ': 'awx', 'ặ': 'awj',
+            'é': 'es', 'è': 'ef', 'ẻ': 'er', 'ẽ': 'ex', 'ẹ': 'ej', 'ê': 'ee', 'ế': 'ees', 'ề': 'eef', 'ể': 'eer', 'ễ': 'eex', 'ệ': 'eej',
+            'í': 'is', 'ì': 'if', 'ỉ': 'ir', 'ĩ': 'ix', 'ị': 'ij', 'ó': 'os', 'ò': 'of', 'ỏ': 'or', 'õ': 'ox', 'ọ': 'oj', 'ô': 'oo', 'ố': 'oos', 'ồ': 'oof', 'ổ': 'oor', 'ỗ': 'oox', 'ộ': 'ooj',
+            'ơ': 'ow', 'ớ': 'ows', 'ờ': 'owf', 'ở': 'owr', 'ỡ': 'owx', 'ợ': 'owj', 'ú': 'us', 'ù': 'uf', 'ủ': 'ur', 'ũ': 'ux', 'ụ': 'uj', 'ư': 'uw', 'ứ': 'uws', 'ừ': 'uwf', 'ử': 'uwr', 'ữ': 'uwx', 'ự': 'uwj',
+            'ý': 'ys', 'ỳ': 'yf', 'ỷ': 'yr', 'ỹ': 'yx', 'ỵ': 'yj', 'đ': 'dd'
+        };
+
+        const SEMA_ANGLES = {
+            'A': [180, 225], 'B': [180, 270], 'C': [180, 315], 'D': [180, 0],
+            'E': [180, 45],  'F': [180, 90],  'G': [180, 135], 'H': [225, 270],
+            'I': [225, 315], 'K': [225, 0],   'L': [225, 45],  'M': [225, 90],
+            'N': [225, 135], 'O': [270, 315], 'P': [270, 0],   'Q': [270, 45],
+            'R': [270, 90],  'S': [270, 135], 'T': [315, 0],   'U': [315, 45],
+            'Y': [90, 315],  'V': [0, 45],    'W': [45, 90],   'X': [45, 135],
+            'Z': [90, 135],  'J': [0, 90],    ' ': [180, 180],
+            'READY': [180, 180]
+        };
+
+        // --- STATE ---
+        let audioCtx = null;
+        let oscillator = null;
+        let gainNode = null;
+        let isPlaying = false;
+        let isTestMode = false;
+        let currentTargetMessage = "";
+        let timeouts = [];
+
+        // --- UTILS ---
+        function cleanText(t) {
+            return t.trim().toLowerCase().replace(/[.,!?;:]/g, "");
         }
 
-        // Timeout handler: If React doesn't load in 5 seconds, show help
-        setTimeout(function() {
-            var loader = document.getElementById('loading-state');
-            if (loader && loader.style.display !== 'none') {
-                document.getElementById('timeout-msg').classList.remove('hidden');
-                document.getElementById('loading-text').textContent = "Việc tải thư viện đang chậm hơn dự kiến...";
+        function toTelex(text) {
+            let res = "";
+            for (let char of text.toLowerCase()) {
+                res += TELEX_MAP[char] || char;
             }
-        }, 5000);
+            return res.toUpperCase();
+        }
 
-        // Global Error Handler
-        window.onerror = function(msg, url, line, col, error) {
-            const loadingDiv = document.getElementById('loading-state');
-            if (loadingDiv) {
-                loadingDiv.innerHTML = `
-                    <div class="p-6 bg-red-50 text-red-900 rounded-xl border border-red-200 max-w-lg mx-auto mt-10 shadow-xl">
-                        <h3 class="font-bold text-lg mb-2 flex items-center gap-2">❌ Lỗi Khởi Động</h3>
-                        <p class="mb-4 text-sm">${msg}</p>
-                        <div class="text-xs font-mono bg-white p-3 rounded border border-red-100 overflow-auto max-h-32 mb-4">
-                            ${error ? error.stack : 'No stack trace'}
-                        </div>
-                        <button onclick="window.location.reload()" class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-colors">Tải lại trang</button>
-                    </div>
-                `;
+        function toMorse(telex) {
+            return telex.split('').map(c => MORSE_MAP[c] || '').join(' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioCtx.createGain();
+                gainNode.connect(audioCtx.destination);
             }
-        };
+        }
 
-        // Polyfill
-        if (!window.process) window.process = { env: {} };
-    </script>
+        function stopAll() {
+            isPlaying = false;
+            timeouts.forEach(clearTimeout);
+            timeouts = [];
+            if (gainNode) gainNode.gain.setTargetAtTime(0, audioCtx?.currentTime || 0, 0.05);
+            if (oscillator) { try { oscillator.stop(); } catch(e){} oscillator = null; }
+            document.getElementById('morseLight').className = 'w-20 h-20 bg-slate-200 rounded-full mx-auto border-4 border-slate-300 transition-colors';
+            document.getElementById('semaChar').innerText = "";
+            document.getElementById('semaStatus').innerText = "";
+            document.getElementById('semaStatus').classList.remove('status-blink', 'text-orange-500');
+            setArms(180, 180);
+        }
 
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.3.1';
-        import ReactDOM from 'https://esm.sh/react-dom@18.3.1/client';
-        import { GoogleGenAI } from 'https://esm.sh/@google/genai@0.0.12';
-        import { Play, Square, RefreshCw, Wand2, Radio, Flag, GraduationCap, BookOpen, Settings, Save, X, Key, AlertTriangle, Menu } from 'https://esm.sh/lucide-react@0.363.0';
+        function setArms(leftAngle, rightAngle) {
+            const lRad = (leftAngle - 90) * Math.PI / 180;
+            const rRad = (rightAngle - 90) * Math.PI / 180;
+            const xL = 50 + 35 * Math.cos(lRad); const yL = 40 + 35 * Math.sin(lRad);
+            const xR = 50 + 35 * Math.cos(rRad); const yR = 40 + 35 * Math.sin(rRad);
+            const armL = document.getElementById('armLeft');
+            const armR = document.getElementById('armRight');
+            armL.querySelector('line').setAttribute('x2', xL); armL.querySelector('line').setAttribute('y2', yL);
+            armR.querySelector('line').setAttribute('x2', xR); armR.querySelector('line').setAttribute('y2', yR);
+            armL.querySelector('rect:first-of-type').setAttribute('x', xL - 6); armL.querySelector('rect:first-of-type').setAttribute('y', yL - 6);
+            armR.querySelector('rect:first-of-type').setAttribute('x', xR - 6); armR.querySelector('rect:first-of-type').setAttribute('y', yR - 6);
+        }
 
-        // --- Remove Loading Screen when React Starts ---
-        const loadingEl = document.getElementById('loading-state');
-        if(loadingEl) loadingEl.style.display = 'none';
-
-        // --- DATA & LOGIC ---
-        const MORSE_CODE = { 'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.', 'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-', 'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.', '.': '.-.-.-', ',': '--..--', '?': '..--..', ' ': '/' };
-
-        const SEMAPHORE_CSS_ANGLES = {
-            'REST': { rightArm: 0, leftArm: 0 }, ' ': { rightArm: 0, leftArm: 0 },
-            'A': { rightArm: 45, leftArm: 0 }, 'B': { rightArm: 90, leftArm: 0 }, 'C': { rightArm: 135, leftArm: 0 }, 'D': { rightArm: 180, leftArm: 0 },
-            'E': { rightArm: 0, leftArm: 135 }, 'F': { rightArm: 0, leftArm: -90 }, 'G': { rightArm: 0, leftArm: -45 }, 'H': { rightArm: 90, leftArm: 45 },
-            'I': { rightArm: 90, leftArm: 135 }, 'J': { rightArm: 180, leftArm: -90 }, 'K': { rightArm: 45, leftArm: 180 }, 'L': { rightArm: 45, leftArm: -135 },
-            'M': { rightArm: 45, leftArm: -90 }, 'N': { rightArm: 45, leftArm: -45 }, 'O': { rightArm: 135, leftArm: -90 }, 'P': { rightArm: 180, leftArm: 45 },
-            'Q': { rightArm: 180, leftArm: 90 }, 'R': { rightArm: 180, leftArm: 135 }, 'S': { rightArm: 180, leftArm: -45 }, 'T': { rightArm: 180, leftArm: -135 },
-            'U': { rightArm: 135, leftArm: 180 }, 'V': { rightArm: -45, leftArm: 180 }, 'W': { rightArm: -90, leftArm: 135 }, 'X': { rightArm: -45, leftArm: 135 },
-            'Y': { rightArm: 90, leftArm: 180 }, 'Z': { rightArm: -45, leftArm: -90 }, 'NUM': { rightArm: 180, leftArm: -135 }
-        };
-
-        const toTelex = (str) => {
-            let text = str.replace(/đ/g, 'dd').replace(/Đ/g, 'DD').normalize('NFD');
-            const tones = { '\u0301': 'S', '\u0300': 'F', '\u0309': 'R', '\u0303': 'X', '\u0323': 'J' };
-            return text.split(' ').map(word => {
-                let toneChar = '', newWord = '';
-                for (const char of word) tones[char] ? toneChar = tones[char] : newWord += char;
-                let processed = newWord.replace(/a\u0302/gi, 'aa').replace(/e\u0302/gi, 'ee').replace(/o\u0302/gi, 'oo').replace(/a\u0306/gi, 'aw').replace(/o\u031B/gi, 'ow').replace(/u\u031B/gi, 'uw');
-                return processed.replace(/[\u0300-\u036f]/g, '').toUpperCase() + toneChar;
-            }).join(' ');
-        };
-
-        class MorseAudioEngine {
-            constructor() { this.actx = null; this.gain = null; this.timeouts = []; this.isPlaying = false; }
-            init() { 
-                if (!this.actx) { 
-                    this.actx = new (window.AudioContext || window.webkitAudioContext)(); 
-                    this.gain = this.actx.createGain(); 
-                    this.gain.connect(this.actx.destination); 
-                    this.gain.gain.value = 0; 
-                } 
-            }
-            playTone(dur) {
-                this.init(); if(!this.actx) return;
-                const osc = this.actx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(750, this.actx.currentTime);
-                osc.connect(this.gain);
-                const now = this.actx.currentTime;
-                osc.start(now);
-                this.gain.gain.cancelScheduledValues(now);
-                this.gain.gain.setValueAtTime(0, now);
-                this.gain.gain.linearRampToValueAtTime(1, now + 0.005);
-                this.gain.gain.setValueAtTime(1, now + dur - 0.005);
-                this.gain.gain.linearRampToValueAtTime(0, now + dur);
-                osc.stop(now + dur + 0.05);
-            }
-            stop() { this.isPlaying = false; this.timeouts.forEach(clearTimeout); this.timeouts = []; if(this.gain) this.gain.gain.cancelScheduledValues(0); }
-            play(msg, wpm, onChar, onEnd) {
-                this.stop(); this.isPlaying = true;
-                const unit = 1200 / wpm / 1000;
-                let time = 0;
-                const add = (fn, delay) => this.timeouts.push(setTimeout(fn, delay * 1000));
-                
-                for (let i = 0; i < msg.length; i++) {
-                    if (!this.isPlaying) break;
-                    const char = msg[i], code = MORSE_CODE[char];
-                    if (char === ' ') { time += unit * 7; continue; }
-                    if (code) {
-                        add(() => onChar(char), time);
-                        for (let s of code) {
-                            const dur = s === '.' ? unit : unit * 3;
-                            add(() => this.playTone(dur), time);
-                            time += dur + unit;
-                        }
-                        time += unit * 2; // (3 units total gap between letters)
-                    }
+        async function playCircleEight(onComplete) {
+            const speed = 120;
+            const sequence = [0, 45, 90, 135, 180, 225, 270, 315];
+            document.getElementById('semaStatus').innerText = "VÒNG SỐ 8";
+            for (let r = 0; r < 2; r++) {
+                for (let a of sequence) {
+                    if (!isPlaying) return;
+                    setArms(a, a + 180);
+                    await new Promise(res => timeouts.push(setTimeout(res, speed)));
                 }
-                add(() => { onEnd(); this.isPlaying = false; }, time);
             }
+            onComplete();
         }
-        const audio = new MorseAudioEngine();
 
-        const generateAI = async (mode, count, key) => {
-            if (!key) throw new Error("Chưa nhập API Key");
-            const ai = new GoogleGenAI({ apiKey: key });
-            const res = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: `Tạo 1 câu tiếng Việt ý nghĩa về kỹ năng Đội/thiên nhiên, khoảng ${count} từ.`,
-                config: { systemInstruction: `Bạn là HLV Kim Đồng. Trả về text thuần, không lời dẫn.`, temperature: 1 }
-            });
-            return (res.text || "LOI MANG").replace(/["']/g, '').trim();
-        };
-
-        // --- COMPONENTS ---
-
-        const Header = ({ onOpenSettings }) => (
-            <header className="bg-slate-900 text-white shadow-md sticky top-0 z-40">
-                <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-slate-800 p-2 rounded-lg border border-slate-700">
-                            <GraduationCap size={24} className="text-sky-400" />
-                        </div>
-                        <div>
-                            <h1 className="font-bold text-lg leading-tight">HLV Kim Đồng</h1>
-                            <div className="text-xs font-medium text-slate-400">Trợ lý rèn luyện Đội viên</div>
-                        </div>
-                    </div>
-                    <button onClick={onOpenSettings} className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-300 hover:text-white">
-                        <Settings size={20} />
-                    </button>
-                </div>
-            </header>
-        );
-
-        const SettingsModal = ({ isOpen, onClose, apiKey, setApiKey }) => {
-            const [val, setVal] = useState(apiKey);
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 animate-[fadeIn_0.2s]">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-lg flex items-center gap-2"><Settings size={18}/> Cài đặt</h3>
-                            <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600"/></button>
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Google API Key</label>
-                            <input type="password" value={val} onChange={e=>setVal(e.target.value)} className="w-full p-3 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-sky-500 outline-none" placeholder="AIza..." />
-                            <p className="text-xs text-slate-500 mt-2">Dùng để tạo đề bài tự động.</p>
-                        </div>
-                        <button onClick={()=>{setApiKey(val); onClose();}} className="w-full py-2.5 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 flex justify-center gap-2">
-                            <Save size={18}/> Lưu lại
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        const SemaphoreFigure = ({ char }) => {
-            const a = SEMAPHORE_CSS_ANGLES[char] || { rightArm: 0, leftArm: 0 };
-            return (
-                <div className="w-64 h-64 bg-white rounded-xl border border-slate-200 shadow-sm mx-auto relative">
-                    <svg viewBox="0 0 400 400" className="w-full h-full">
-                        <ellipse cx="200" cy="350" rx="100" ry="15" fill="#e2e8f0" />
-                        <rect x="180" y="150" width="40" height="160" rx="10" fill="#334155" />
-                        <circle cx="200" cy="110" r="30" fill="#f8d7da" stroke="#334155" strokeWidth="3" />
-                        <g transform={`rotate(${90 + a.rightArm}, 180, 160)`}>
-                            <rect x="180" y="160" width="100" height="15" rx="7" fill="#334155" />
-                            <line x1="270" y1="167" x2="330" y2="167" stroke="#8B4513" strokeWidth="4" />
-                            <path d="M 280 137 L 340 137 L 280 197 Z" fill="#FACC15" transform="translate(0,0)" />
-                            <path d="M 340 137 L 340 197 L 280 197 Z" fill="#EF4444" transform="translate(0,0)" />
-                        </g>
-                        <g transform={`rotate(${90 + a.leftArm}, 220, 160)`}>
-                            <rect x="220" y="160" width="100" height="15" rx="7" fill="#334155" />
-                            <line x1="310" y1="167" x2="370" y2="167" stroke="#8B4513" strokeWidth="4" />
-                            <path d="M 320 137 L 380 137 L 320 197 Z" fill="#FACC15" />
-                            <path d="M 380 137 L 380 197 L 320 197 Z" fill="#EF4444" />
-                        </g>
-                    </svg>
-                    <div className="absolute bottom-2 right-2 font-mono font-bold text-slate-300 text-xl">{char}</div>
-                </div>
-            );
-        };
-
-        const Trainer = ({ mode, apiKey, openSettings }) => {
-            const isMorse = mode === 'MORSE';
-            const [text, setText] = useState(isMorse ? 'CHÀO' : 'TỰ HÀO');
-            const [speed, setSpeed] = useState(isMorse ? 12 : 2000);
-            const [len, setLen] = useState(2);
-            const [playing, setPlaying] = useState(false);
-            const [curChar, setCurChar] = useState('');
-            const [curIdx, setCurIdx] = useState(-1);
-            const [ans, setAns] = useState('');
-            const [res, setRes] = useState(null);
-            const [loading, setLoading] = useState(false);
-            const timer = useRef(null);
-
+        function playSemaphore() {
+            stopAll(); isPlaying = true;
+            const text = isTestMode ? currentTargetMessage : document.getElementById('textInput').value;
+            if (!text) return showToast("Vui lòng soạn bản tin!");
             const telex = toTelex(text);
+            const speed = parseInt(document.getElementById('semaSlider').value);
+            
+            playCircleEight(() => {
+                let idx = 0;
+                let lastChar = "";
 
-            useEffect(() => {
-                return () => { audio.stop(); clearInterval(timer.current); };
-            }, [mode]);
+                function next() {
+                    if (!isPlaying) return;
+                    if (idx >= telex.length) {
+                        playCircleEight(() => { stopAll(); document.getElementById('semaChar').innerText = "HẾT"; });
+                        return;
+                    }
 
-            const play = () => {
-                if (playing) {
-                    isMorse ? audio.stop() : clearInterval(timer.current);
-                    setPlaying(false); setCurChar(''); setCurIdx(-1);
-                } else {
-                    setPlaying(true); setRes(null); setAns('');
-                    if (isMorse) {
-                        audio.play(telex, speed, setCurChar, () => { setPlaying(false); setCurChar(''); });
+                    const char = telex[idx];
+                    
+                    // Hiệu ứng "Nhấp chữ" khi 2 chữ cái giống nhau liền nhau
+                    if (char === lastChar && char !== ' ') {
+                        document.getElementById('semaStatus').innerText = "NHẤP CHỮ";
+                        document.getElementById('semaStatus').classList.add('status-blink', 'text-orange-500');
+                        setArms(180, 180); // Đưa về vị trí nghỉ
+                        
+                        // Nghỉ một nửa thời gian speed rồi mới phát lại chữ đó
+                        timeouts.push(setTimeout(() => {
+                            if (!isPlaying) return;
+                            document.getElementById('semaStatus').innerText = "PHÁT TIN";
+                            document.getElementById('semaStatus').classList.remove('status-blink', 'text-orange-500');
+                            displayChar(char);
+                            lastChar = char;
+                            idx++;
+                            timeouts.push(setTimeout(next, speed));
+                        }, speed / 2));
                     } else {
-                        setCurIdx(0);
-                        timer.current = setInterval(() => {
-                            setCurIdx(p => {
-                                if (p >= telex.length - 1) { setPlaying(false); clearInterval(timer.current); return -1; }
-                                return p + 1;
-                            });
-                        }, speed);
+                        document.getElementById('semaStatus').innerText = "PHÁT TIN";
+                        document.getElementById('semaStatus').classList.remove('status-blink', 'text-orange-500');
+                        displayChar(char);
+                        lastChar = char;
+                        idx++;
+                        timeouts.push(setTimeout(next, speed));
                     }
                 }
-            };
 
-            const gen = async () => {
-                if (!apiKey) return openSettings();
-                setLoading(true);
-                try {
-                    const t = await generateAI(mode, len, apiKey);
-                    setText(t); setAns(''); setRes(null); setCurIdx(-1);
-                } catch(e) { alert(e.message); }
-                setLoading(false);
-            };
+                function displayChar(c) {
+                    const angles = SEMA_ANGLES[c] || SEMA_ANGLES['READY'];
+                    document.getElementById('semaChar').innerText = (c === ' ' || isTestMode) ? "???" : c;
+                    setArms(angles[0], angles[1]);
+                }
 
-            const check = () => {
-                const u = ans.trim().toUpperCase();
-                setRes(u === text.trim().toUpperCase() || u === telex);
-            };
+                next();
+            });
+        }
 
-            return (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className={`p-4 text-white flex justify-between items-center ${isMorse ? 'bg-sky-600' : 'bg-red-600'}`}>
-                        <h2 className="font-bold text-lg flex gap-2 items-center">
-                            {isMorse ? <Radio size={20}/> : <Flag size={20}/>} 
-                            Luyện {isMorse ? 'Morse' : 'Semaphore'}
-                        </h2>
-                        <span className="text-xs bg-white/20 px-2 py-1 rounded">Chuẩn Telex</span>
-                    </div>
+        function playMorse() {
+            initAudio(); stopAll(); isPlaying = true;
+            const text = isTestMode ? currentTargetMessage : document.getElementById('textInput').value;
+            if (!text) return showToast("Vui lòng soạn bản tin!");
+            const telex = toTelex(text);
+            const wpm = parseInt(document.getElementById('wpmSlider').value);
+            const dotTime = 1200 / wpm;
+            let currentTime = 0;
 
-                    <div className="p-4 space-y-6">
-                        {/* Settings */}
-                        <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 block mb-1">Tốc độ ({isMorse ? 'WPM' : 'ms'})</label>
-                                <input type="range" className={`w-full h-2 rounded-lg appearance-none cursor-pointer bg-slate-200 ${isMorse?'accent-sky-600':'accent-red-600'}`}
-                                    min={isMorse?5:500} max={isMorse?30:4000} step={isMorse?1:100} 
-                                    value={speed} onChange={e=>setSpeed(+e.target.value)} />
-                                <div className="text-right font-bold text-sm">{isMorse ? speed : (speed/1000)+'s'}</div>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 block mb-1">Độ dài ({len} từ)</label>
-                                <input type="range" className={`w-full h-2 rounded-lg appearance-none cursor-pointer bg-slate-200 ${isMorse?'accent-sky-600':'accent-red-600'}`}
-                                    min="1" max="15" value={len} onChange={e=>setLen(+e.target.value)} />
-                            </div>
-                        </div>
+            telex.split('').forEach(char => {
+                if (!isPlaying) return;
+                if (char === ' ') { currentTime += dotTime * 7; } 
+                else {
+                    (MORSE_MAP[char] || '').split('').forEach(sym => {
+                        const dur = (sym === '.') ? dotTime : dotTime * 3;
+                        const start = currentTime; const end = currentTime + dur;
+                        timeouts.push(setTimeout(() => {
+                            if (!isPlaying) return;
+                            document.getElementById('morseLight').classList.add('bg-emerald-400', 'active-glow');
+                            if (oscillator) oscillator.stop();
+                            oscillator = audioCtx.createOscillator();
+                            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                            oscillator.connect(gainNode);
+                            gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.005);
+                            oscillator.start();
+                        }, start));
+                        timeouts.push(setTimeout(() => {
+                            document.getElementById('morseLight').classList.remove('bg-emerald-400', 'active-glow');
+                            gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.005);
+                        }, end));
+                        currentTime += dur + dotTime;
+                    });
+                    currentTime += dotTime * 3;
+                }
+            });
+        }
 
-                        {/* Display */}
-                        <div className="flex justify-center items-center min-h-[160px]">
-                            {isMorse ? (
-                                <div className={`text-6xl font-mono font-bold transition-all ${playing && curChar ? 'text-sky-600 scale-110' : 'text-slate-200'}`}>
-                                    {playing ? (curChar ? '🔊' : '...') : <span className="text-sm text-slate-400 font-sans">Sẵn sàng</span>}
-                                </div>
-                            ) : (
-                                <SemaphoreFigure char={curIdx >= 0 ? telex[curIdx] : 'REST'} />
-                            )}
-                        </div>
+        // --- AI & MODES ---
+        async function startAiQuiz() {
+            const btn = document.getElementById('btnAiQuiz');
+            const icon = document.getElementById('aiIcon');
+            btn.disabled = true;
+            icon.innerHTML = '<span class="loader"></span> Đang tạo...';
 
-                        {/* Actions */}
-                        <div className="flex gap-2">
-                            <button onClick={play} className={`flex-1 py-3 rounded-lg font-bold text-white shadow-sm flex items-center justify-center gap-2 ${playing ? 'bg-slate-700' : (isMorse?'bg-sky-600 hover:bg-sky-700':'bg-red-600 hover:bg-red-700')}`}>
-                                {playing ? <Square size={18}/> : <Play size={18}/>} {playing ? 'Dừng' : 'Bắt đầu'}
-                            </button>
-                            <button onClick={gen} disabled={loading||playing} className={`px-4 rounded-lg font-bold flex items-center gap-2 ${!apiKey ? 'bg-slate-100 text-slate-400' : 'bg-amber-100 text-amber-700'}`}>
-                                {loading ? <RefreshCw className="animate-spin" size={18}/> : <Wand2 size={18}/>} AI
-                            </button>
-                        </div>
+            const sysPrompt = "Bạn là HLV Morse/Semaphore. Hãy tạo 1 câu bản tin ngắn bằng tiếng Việt có dấu, độ dài 15-25 ký tự. Nội dung về chủ đề Đội thiếu niên tiền phong hoặc phong trào thanh niên (ví dụ: 'Sẵn sàng vì Tổ quốc', 'Đi ta đi lên'). Chỉ trả về duy nhất bản tin đó.";
 
-                        {/* Answer */}
-                        <div className="space-y-2">
-                            <input value={ans} onChange={e=>setAns(e.target.value.toUpperCase())} className="w-full p-3 border-2 border-slate-100 rounded-lg font-mono uppercase focus:border-slate-400 outline-none transition-colors" placeholder="Nhập đáp án..." />
-                            <button onClick={check} className="w-full py-2 bg-slate-800 text-white rounded-lg font-bold">Kiểm tra</button>
-                        </div>
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Tạo câu mới ngay." }] }],
+                        systemInstruction: { parts: [{ text: sysPrompt }] }
+                    })
+                });
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "SẴN SÀNG VÌ TỔ QUỐC";
+                
+                currentTargetMessage = text;
+                enterTestMode();
+                showToast("Đã tạo bản tin kiểm tra mới!");
+            } catch (e) {
+                showToast("Lỗi kết nối AI. Vui lòng thử lại.");
+            } finally {
+                btn.disabled = false; icon.innerText = "🎯 Thử thách Kiểm tra";
+            }
+        }
 
-                        {/* Result */}
-                        {res !== null && (
-                            <div className={`p-3 rounded-lg text-center font-bold ${res ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {res ? 'CHÍNH XÁC!' : `SAI RỒI! ĐÁP ÁN: ${text} (${telex})`}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
+        function enterTestMode() {
+            isTestMode = true;
+            document.getElementById('normalInputGroup').classList.add('hidden');
+            document.getElementById('testInputGroup').classList.remove('hidden');
+            document.getElementById('btnNormalMode').classList.remove('hidden');
+            document.getElementById('resultSection').classList.add('invisible');
+            document.getElementById('userGuess').value = "";
+            document.getElementById('inputLabel').innerHTML = '<span class="text-orange-600">🎯</span> Đang trong chế độ KIỂM TRA';
+            
+            const telex = toTelex(currentTargetMessage);
+            document.getElementById('telexPreview').innerText = telex;
+            document.getElementById('morsePreview').innerText = toMorse(telex);
+        }
+
+        function exitTestMode() {
+            isTestMode = false;
+            stopAll();
+            document.getElementById('normalInputGroup').classList.remove('hidden');
+            document.getElementById('testInputGroup').classList.add('hidden');
+            document.getElementById('btnNormalMode').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('invisible');
+            document.getElementById('inputLabel').innerHTML = '<span class="text-emerald-600">📝</span> Soạn thảo bản tin:';
+        }
+
+        function checkAnswer() {
+            const guess = cleanText(document.getElementById('userGuess').value);
+            const target = cleanText(currentTargetMessage);
+            
+            if (!guess) return showToast("Bạn chưa nhập đáp án!");
+
+            if (guess === target) {
+                showToast("CHÍNH XÁC! Chúc mừng đồng chí! 🎉");
+                document.getElementById('userGuess').classList.add('correct-pulse', 'border-emerald-500');
+                revealAnswer();
+            } else {
+                showToast("Sai rồi! Hãy thử nghe/nhìn lại nhé.");
+                document.getElementById('userGuess').classList.add('border-red-500');
+                setTimeout(() => document.getElementById('userGuess').classList.remove('border-red-500'), 1000);
+            }
+        }
+
+        function revealAnswer() {
+            document.getElementById('resultSection').classList.remove('invisible');
+            showToast("Đã hiển thị đáp án bản tin.");
+        }
+
+        // --- EVENTS ---
+        document.getElementById('textInput').oninput = (e) => {
+            const telex = toTelex(e.target.value);
+            document.getElementById('telexPreview').innerText = telex || "Chưa có bản tin...";
+            document.getElementById('morsePreview').innerText = toMorse(telex) || "...";
         };
 
-        const Reference = () => {
-            const [tab, setTab] = useState('MORSE');
-            const url = id => `https://drive.google.com/file/d/${id}/preview`;
-            return (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="flex border-b">
-                        {['MORSE', 'SEMAPHORE'].map(t => (
-                            <button key={t} onClick={()=>setTab(t)} className={`flex-1 py-3 font-bold text-sm ${tab===t ? 'text-sky-600 border-b-2 border-sky-600 bg-sky-50' : 'text-slate-500 hover:bg-slate-50'}`}>{t}</button>
-                        ))}
-                    </div>
-                    <div className="aspect-video bg-slate-100 relative">
-                         <iframe src={url(tab==='MORSE'?"1Rcou2G1_pK_cKLCwhPcG3mJYIR25OWiD":"1jtNFRsQqA36HTBMQ3LPZ6BxF4gOpZXhd")} className="absolute inset-0 w-full h-full" allow="autoplay"></iframe>
-                    </div>
-                </div>
-            );
-        };
+        document.getElementById('btnAiQuiz').onclick = startAiQuiz;
+        document.getElementById('btnNormalMode').onclick = exitTestMode;
+        document.getElementById('btnCheckAnswer').onclick = checkAnswer;
+        document.getElementById('btnToggleReveal').onclick = revealAnswer;
+        document.getElementById('btnPlayMorse').onclick = playMorse;
+        document.getElementById('btnPlaySema').onclick = playSemaphore;
+        document.getElementById('btnStop').onclick = stopAll;
 
-        const App = () => {
-            const [view, setView] = useState('MORSE');
-            const [key, setKey] = useState(localStorage.getItem('API_KEY')||'');
-            const [setOpen, setSetOpen] = useState(false);
+        document.getElementById('wpmSlider').oninput = (e) => document.getElementById('wpmVal').innerText = e.target.value;
+        document.getElementById('semaSlider').oninput = (e) => document.getElementById('semaVal').innerText = e.target.value;
 
-            const saveKey = k => { setKey(k); localStorage.setItem('API_KEY', k); };
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.remove('hidden');
+            setTimeout(() => t.classList.replace('opacity-0', 'opacity-100'), 10);
+            setTimeout(() => {
+                t.classList.replace('opacity-100', 'opacity-0');
+                setTimeout(() => t.classList.add('hidden'), 500);
+            }, 3000);
+        }
 
-            return (
-                <div className="min-h-screen flex flex-col">
-                    <Header onOpenSettings={()=>setSetOpen(true)} />
-                    <main className="flex-1 max-w-md mx-auto w-full p-4 pb-20 mt-6">
-                        {/* Compact Tab Switcher */}
-                        <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200 mb-4">
-                            {[
-                                {id:'MORSE', icon: Radio, label: 'Morse'},
-                                {id:'SEMAPHORE', icon: Flag, label: 'Sema'},
-                                {id:'REF', icon: BookOpen, label: 'Tra cứu'}
-                            ].map(i => (
-                                <button key={i.id} onClick={()=>setView(i.id)} 
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-1 transition-all ${view===i.id ? 'bg-slate-800 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}>
-                                    <i.icon size={14}/> {i.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {view === 'REF' ? <Reference /> : <Trainer mode={view} apiKey={key} openSettings={()=>setSetOpen(true)} />}
-                    </main>
-
-                    <SettingsModal isOpen={setOpen} onClose={()=>setSetOpen(false)} apiKey={key} setApiKey={saveKey} />
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        setArms(180, 180);
     </script>
 </body>
 </html>
