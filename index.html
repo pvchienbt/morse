@@ -67,7 +67,6 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- Left Column -->
             <div class="lg:col-span-8 space-y-6">
-                <!-- Main Controls -->
                 <section class="bg-white p-6 rounded-3xl shadow-md border border-slate-200">
                     <div class="flex justify-between items-center mb-4">
                         <label id="inputLabel" class="text-slate-700 font-bold flex items-center gap-2">
@@ -75,7 +74,7 @@
                         </label>
                         <div class="flex gap-2">
                             <button id="btnAiQuiz" class="text-sm bg-orange-100 text-orange-700 hover:bg-orange-200 px-4 py-2 rounded-full font-bold transition-all flex items-center gap-2">
-                                <span id="aiIcon">🎯 Thử thách Kiểm tra</span>
+                                <span id="aiIcon">✨ AI Ra Đề Phong Phú</span>
                             </button>
                             <button id="btnNormalMode" class="text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-full font-bold transition-all hidden">
                                 🔙 Quay lại Tự luyện
@@ -86,7 +85,7 @@
                     <div id="normalInputGroup">
                         <textarea id="textInput" 
                             class="w-full h-24 p-4 bg-slate-50 border border-slate-300 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-xl font-medium"
-                            placeholder="Nhập nội dung (Ví dụ: 22/12)..."></textarea>
+                            placeholder="Nhập nội dung (Ví dụ: 20/11)..."></textarea>
                     </div>
 
                     <div id="testInputGroup" class="hidden space-y-4">
@@ -114,7 +113,7 @@
                 </section>
 
                 <section id="resultSection" class="bg-white p-6 rounded-3xl shadow-md border border-slate-200 overflow-hidden transition-all">
-                    <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2 text-emerald-800">📡 Phân tích chuẩn</h3>
+                    <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2 text-emerald-800 uppercase tracking-wider">📡 Phân tích bản tin</h3>
                     <div id="answerContent">
                         <div id="telexPreview" class="bg-slate-900 text-emerald-400 p-5 rounded-2xl code-font min-h-[60px] text-xl break-all mb-3 leading-relaxed">Chưa có bản tin...</div>
                         <div id="morsePreview" class="bg-slate-100 text-slate-600 p-5 rounded-2xl code-font text-2xl tracking-widest break-all">...</div>
@@ -124,7 +123,7 @@
 
             <!-- Right Column -->
             <div class="lg:col-span-4 space-y-6">
-                <!-- Semaphore visualization -->
+                <!-- Semaphore Visualization -->
                 <div class="bg-white p-6 rounded-3xl shadow-md border border-slate-200 text-center relative">
                     <h3 class="font-bold text-slate-700 mb-6 text-emerald-800 tracking-wider uppercase">Trạm phát Semaphore</h3>
                     <div id="semaContainer" class="flex justify-center bg-slate-50 p-6 rounded-3xl h-64 items-center border border-slate-100">
@@ -156,22 +155,19 @@
                     </div>
                 </div>
 
-                <!-- Morse Visualization -->
                 <div class="bg-white p-6 rounded-3xl shadow-md border border-slate-200 text-center">
                     <h3 class="font-bold text-slate-700 mb-4 uppercase">Đèn tín hiệu Morse</h3>
                     <div id="morseLight" class="w-20 h-20 bg-slate-200 rounded-full mx-auto border-4 border-slate-300 transition-colors"></div>
                 </div>
 
-                <!-- Configuration -->
                 <div class="bg-emerald-900 text-white p-6 rounded-3xl shadow-xl">
                     <h3 class="font-bold mb-6 flex items-center gap-2 text-white uppercase">⚙️ Cấu hình HLV</h3>
                     <div class="space-y-5">
-                        <!-- Ô nhập API Key: Sẽ bị ẩn nếu chạy trong Canvas -->
                         <div id="apiConfigContainer">
                             <div class="flex justify-between text-[10px] font-bold uppercase text-orange-300 mb-2 tracking-widest">
                                 <span>Khóa API Gemini (Dùng cho web riêng)</span>
                             </div>
-                            <input type="password" id="customApiKey" placeholder="Dán khóa API Gemini vào đây..." class="w-full p-2 bg-emerald-800 text-white text-xs rounded-lg border border-emerald-700 outline-none focus:border-orange-400 transition-all">
+                            <input type="password" id="customApiKey" placeholder="Dán khóa API vào đây..." class="w-full p-2 bg-emerald-800 text-white text-xs rounded-lg border border-emerald-700 outline-none focus:border-orange-400 transition-all">
                         </div>
                         <div>
                             <div class="flex justify-between text-[10px] font-bold uppercase text-emerald-300 mb-2 tracking-widest">
@@ -196,13 +192,10 @@
     <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl hidden opacity-0 transition-all font-bold shadow-2xl z-50 border border-slate-700 text-center"></div>
 
     <script>
-        // Mặc định trống để môi trường Gemini tự xử lý. 
-        // Khi chạy bên ngoài, ứng dụng sẽ lấy khóa từ ô nhập liệu customApiKey.
         const apiKey = ""; 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'morse-sema-trainer';
         const isGeminiEnv = typeof __app_id !== 'undefined';
 
-        // Ẩn cấu hình API nếu đang ở trong Gemini
         if (isGeminiEnv) {
             const apiContainer = document.getElementById('apiConfigContainer');
             if (apiContainer) apiContainer.style.display = 'none';
@@ -394,34 +387,43 @@
 
         async function startAiQuiz() {
             const btn = document.getElementById('btnAiQuiz');
-            btn.disabled = true; document.getElementById('aiIcon').innerHTML = '<span class="loader"></span>';
+            btn.disabled = true; document.getElementById('aiIcon').innerHTML = '<span class="loader"></span> Đang soạn đề...';
             
-            // Ưu tiên sử dụng khóa trong code (môi trường Gemini) hoặc lấy từ ô nhập liệu
             const activeKey = apiKey || document.getElementById('customApiKey').value;
-            
             if (!isGeminiEnv && !activeKey) {
-                showToast("Vui lòng nhập khóa API Gemini trong mục Cấu hình HLV!");
+                showToast("Vui lòng nhập khóa API Gemini!");
                 btn.disabled = false;
-                document.getElementById('aiIcon').innerText = "🎯 Thử thách Kiểm tra";
+                document.getElementById('aiIcon').innerText = "✨ AI Ra Đề Phong Phú";
                 return;
             }
 
-            const systemPrompt = "Bạn là HLV Morse/Semaphore. Tạo một bản tin tiếng Việt có dấu với độ dài từ 15 đến 30 ký tự. Nội dung có thể là các câu khẩu hiệu, lời nhắc nhở hoặc thông tin về phong trào thiếu nhi. Bản tin KHÔNG nhất thiết phải có số. Trả về duy nhất bản tin đó, không có thêm văn bản nào khác.";
+            // NÂNG CẤP SYSTEM PROMPT ĐỂ PHONG PHÚ HƠN
+            const systemPrompt = `Bạn là chuyên gia ra đề Morse và Semaphore cho hội thi Chỉ huy Đội giỏi.
+            Nhiệm vụ: Tạo một bản tin tiếng Việt có dấu, độ dài từ 15 đến 30 ký tự.
+            YÊU CẦU QUAN TRỌNG: 
+            1. Nội dung phải cực kỳ phong phú và thay đổi ngẫu nhiên giữa các chủ đề: Địa danh (Đảo Trường Sa, Núi Phan Xi Păng...), Thiên nhiên (Rừng thông reo, Sóng biển rì rào...), Kỹ năng (Nút dẹt dứt khoát, Trại hè rực lửa...), Lịch sử (Chiến thắng Điện Biên, Hào khí Đông A...), hoặc Đố vui ngắn.
+            2. Tránh các câu khẩu hiệu quá phổ biến. 
+            3. Hạn chế lặp lại từ ngữ trong cùng một câu.
+            4. Trả về duy nhất nội dung bản tin, không có bất kỳ văn bản dẫn truyện nào.`;
             
+            // Thêm yếu tố ngẫu nhiên vào payload để AI không bị kẹt trong một mẫu phản hồi
+            const randomSeed = Math.random().toString(36).substring(7);
+            const payload = {
+                contents: [{ parts: [{ text: `Hãy tạo một đề bài mới lạ và độc đáo ngay bây giờ. Mã định danh ngẫu nhiên: ${randomSeed}` }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
             try {
                 const result = await fetchWithRetry(
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: "Tạo một bản tin thử thách ngẫu nhiên." }] }],
-                            systemInstruction: { parts: [{ text: systemPrompt }] }
-                        })
+                        body: JSON.stringify(payload)
                     }
                 );
 
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "SẴN SÀNG VÌ TỔ QUỐC";
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "NÚI RỪNG TÂY NGUYÊN HÙNG VĨ";
                 currentTargetMessage = text;
                 isTestMode = true;
                 updatePreviews(text);
@@ -430,11 +432,11 @@
                 document.getElementById('btnNormalMode').classList.remove('hidden');
                 document.getElementById('resultSection').classList.add('invisible');
                 document.getElementById('userGuess').value = "";
-                showToast("Đã kích hoạt chế độ Kiểm tra!");
+                showToast("Đề thi mới đã sẵn sàng!");
             } catch (e) {
-                showToast("Lỗi API: Kiểm tra khóa API hoặc kết nối mạng của bạn.");
+                showToast("Lỗi API. Hãy thử lại!");
             } finally {
-                btn.disabled = false; document.getElementById('aiIcon').innerText = "🎯 Thử thách Kiểm tra";
+                btn.disabled = false; document.getElementById('aiIcon').innerText = "✨ AI Ra Đề Phong Phú";
             }
         }
 
@@ -451,10 +453,10 @@
             const guess = document.getElementById('userGuess').value.trim().toLowerCase().replace(/[.,!?;:]/g, "");
             const target = currentTargetMessage.trim().toLowerCase().replace(/[.,!?;:]/g, "");
             if (guess === target) { 
-                showToast("QUÁ GIỎI! 🎉"); 
+                showToast("CHÍNH XÁC! QUÁ XUẤT SẮC! 🎉"); 
                 document.getElementById('resultSection').classList.remove('invisible'); 
             }
-            else showToast("Chưa đúng đâu, tập trung nhé!");
+            else showToast("Chưa đúng, hãy tập trung nghe/nhìn lại!");
         };
 
         document.getElementById('btnToggleReveal').onclick = () => document.getElementById('resultSection').classList.remove('invisible');
